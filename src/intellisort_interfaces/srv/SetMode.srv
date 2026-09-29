@@ -1,0 +1,7 @@
+# request
+string mode
+bool enable_task
+---
+# response
+bool success
+string message

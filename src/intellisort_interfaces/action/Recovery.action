@@ -1,0 +1,12 @@
+# goal
+string error_code
+string description
+---
+# result
+bool success
+string recovery_action
+string message
+---
+# feedback
+string phase
+string message

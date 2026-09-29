@@ -1,0 +1,5 @@
+# sim | real
+robot_driver: sim
+camera_driver: sim
+end_effector: parallel_2f
+use_sim_time: true

@@ -1,0 +1,28 @@
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <Fallback name="RootFallback">
+      <Sequence name="MainSequence">
+        <Action ID="WaitForTask"/>
+        <SubTree ID="Perceive"/>
+        <Action ID="SelectTarget"/>
+        <Action ID="BuildScene"/>
+        <Action ID="PlanPick"/>
+        <Action ID="ExecutePick"/>
+        <Action ID="ConfirmGrasp"/>
+        <Action ID="PlanPlace"/>
+        <Action ID="ExecutePlace"/>
+        <Action ID="ConfirmPlace"/>
+        <Action ID="ReportSuccess"/>
+      </Sequence>
+      <SubTree ID="Recovery"/>
+    </Fallback>
+  </BehaviorTree>
+
+  <BehaviorTree ID="Perceive">
+    <Sequence name="PerceiveSeq">
+      <Action ID="TriggerCamera"/>
+      <Action ID="DetectObjects"/>
+      <Action ID="EstimatePoses"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

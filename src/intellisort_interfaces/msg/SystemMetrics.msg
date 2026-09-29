@@ -1,0 +1,8 @@
+std_msgs/Header header
+float32 plan_success_rate
+float32 grasp_success_rate
+float32 task_success_rate
+float32 recovery_success_rate
+float32 avg_cycle_time_sec
+int32 completed_tasks
+int32 failed_tasks

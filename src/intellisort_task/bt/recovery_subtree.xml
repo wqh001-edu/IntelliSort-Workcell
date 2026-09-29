@@ -1,0 +1,10 @@
+<root>
+  <BehaviorTree ID="Recovery">
+    <Sequence name="RecoverySeq">
+      <Action ID="DiagnoseException"/>
+      <Action ID="ChooseRecovery"/>
+      <Action ID="ExecuteRecovery"/>
+      <Action ID="RetryOrSkip"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

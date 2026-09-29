@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="table_size_x" value="1.2"/>
+  <xacro:property name="table_size_y" value="0.8"/>
+  <xacro:property name="table_thickness" value="0.05"/>
+  <xacro:property name="table_height" value="0.75"/>
+
+  <!-- ===================== Workbench ===================== -->
+  <link name="table_link">
+    <visual>
+      <origin xyz="0.15 0 ${table_height/2}"/>
+      <geometry><box size="${table_size_x} ${table_size_y} ${table_height}"/></geometry>
+      <material name="table_mat">
+        <color rgba="0.55 0.52 0.48 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.15 0 ${table_height/2}"/>
+      <geometry><box size="${table_size_x} ${table_size_y} ${table_height}"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="50"/>
+      <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+    </inertial>
+  </link>
+
+  <joint name="table_joint" type="fixed">
+    <parent link="world"/>
+    <child link="table_link"/>
+    <!-- table top surface at z=table_height; origin at table center base -->
+    <origin xyz="0.15 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Helper: tabletop surface frame at z = table_height -->
+  <link name="table_top"/>
+  <joint name="table_top_joint" type="fixed">
+    <parent link="table_link"/>
+    <child link="table_top"/>
+    <origin xyz="0 0 ${table_height}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ===================== Feed zone marker ===================== -->
+  <link name="feed_zone">
+    <visual>
+      <origin xyz="0.35 -0.15 ${table_height + 0.001}"/>
+      <geometry><box size="0.28 0.22 0.002"/></geometry>
+      <material name="feed_mat">
+        <color rgba="0.15 0.35 0.7 0.5"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- ===================== Place slots ===================== -->
+  <xacro:macro name="place_slot" params="name x y">
+    <link name="${name}">
+      <visual>
+        <origin xyz="${x} ${y} ${table_height + 0.001}"/>
+        <geometry><box size="0.12 0.12 0.002"/></geometry>
+        <material name="slot_mat">
+          <color rgba="0.2 0.7 0.35 0.55"/>
+        </material>
+      </visual>
+      <visual>
+        <origin xyz="${x} ${y} ${table_height + 0.01}"/>
+        <geometry><cylinder radius="0.055" length="0.02"/></geometry>
+        <material name="slot_rim">
+          <color rgba="0.2 0.55 0.3 0.35"/>
+        </material>
+      </visual>
+    </link>
+    <joint name="${name}_joint" type="fixed">
+      <parent link="world"/>
+      <child link="${name}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:place_slot name="slot_a" x="0.35" y="0.28"/>
+  <xacro:place_slot name="slot_b" x="0.48" y="0.12"/>
+  <xacro:place_slot name="slot_c" x="0.48" y="-0.12"/>
+
+  <!-- ===================== Obstacle block ===================== -->
+  <link name="obstacle_block">
+    <visual>
+      <origin xyz="0.18 0.22 ${table_height + 0.06}"/>
+      <geometry><box size="0.10 0.10 0.12"/></geometry>
+      <material name="obs_mat">
+        <color rgba="0.35 0.35 0.38 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.18 0.22 ${table_height + 0.06}"/>
+      <geometry><box size="0.10 0.10 0.12"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="2"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+  <joint name="obstacle_joint" type="fixed">
+    <parent link="world"/>
+    <child link="obstacle_block"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Colored parts are free bodies in the Gazebo world file -->
+  <gazebo reference="table_link">
+    <material>Gazebo/Wood</material>
+    <mu1>0.9</mu1>
+    <mu2>0.9</mu2>
+  </gazebo>
+  <gazebo reference="obstacle_block">
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
+</robot>

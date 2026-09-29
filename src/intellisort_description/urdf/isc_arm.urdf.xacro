@@ -1,0 +1,402 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="isc_arm">
+
+  <!-- ===================== Properties ===================== -->
+  <xacro:property name="PI" value="3.1415926535897931"/>
+  <xacro:property name="deg" value="${PI/180.0}"/>
+
+  <!-- Link lengths (approx xArm6-scale, reach ~0.7m) -->
+  <xacro:property name="base_height" value="0.08"/>
+  <xacro:property name="link1_height" value="0.12"/>
+  <xacro:property name="link2_length" value="0.28"/>
+  <xacro:property name="link3_length" value="0.25"/>
+  <xacro:property name="link4_length" value="0.08"/>
+  <xacro:property name="link5_length" value="0.08"/>
+  <xacro:property name="link6_length" value="0.06"/>
+  <xacro:property name="gripper_length" value="0.12"/>
+
+  <!-- Inertial macro -->
+  <xacro:macro name="box_inertial" params="mass x y z">
+    <inertial>
+      <mass value="${mass}"/>
+      <inertia ixx="${mass*(y*y+z*z)/12.0}" ixy="0" ixz="0"
+               iyy="${mass*(x*x+z*z)/12.0}" iyz="0"
+               izz="${mass*(x*x+y*y)/12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="cylinder_inertial" params="mass radius length">
+    <inertial>
+      <mass value="${mass}"/>
+      <inertia ixx="${mass*(3*radius*radius+length*length)/12.0}" ixy="0" ixz="0"
+               iyy="${mass*(3*radius*radius+length*length)/12.0}" iyz="0"
+               izz="${mass*radius*radius/2.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- ===================== Materials ===================== -->
+  <material name="isc_grey">
+    <color rgba="0.45 0.47 0.50 1.0"/>
+  </material>
+  <material name="isc_dark">
+    <color rgba="0.18 0.20 0.24 1.0"/>
+  </material>
+  <material name="isc_blue">
+    <color rgba="0.18 0.42 0.82 1.0"/>
+  </material>
+  <material name="isc_orange">
+    <color rgba="0.95 0.55 0.12 1.0"/>
+  </material>
+
+  <!-- ===================== Base ===================== -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${base_height/2}"/>
+      <geometry><box size="0.18 0.18 ${base_height}"/></geometry>
+      <material name="isc_dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${base_height/2}"/>
+      <geometry><box size="0.18 0.18 ${base_height}"/></geometry>
+    </collision>
+    <xacro:box_inertial mass="4.0" x="0.18" y="0.18" z="${base_height}"/>
+  </link>
+
+  <!-- ===================== Link 1 (waist yaw) ===================== -->
+  <joint name="joint1" type="revolute">
+    <parent link="base_link"/>
+    <child link="link1"/>
+    <origin xyz="0 0 ${base_height}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${-180*deg}" upper="${180*deg}" effort="50" velocity="2.5"/>
+    <dynamics damping="0.5" friction="0.1"/>
+  </joint>
+
+  <link name="link1">
+    <visual>
+      <origin xyz="0 0 ${link1_height/2}"/>
+      <geometry><cylinder radius="0.055" length="${link1_height}"/></geometry>
+      <material name="isc_blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link1_height/2}"/>
+      <geometry><cylinder radius="0.055" length="${link1_height}"/></geometry>
+    </collision>
+    <xacro:cylinder_inertial mass="1.5" radius="0.055" length="${link1_height}"/>
+  </link>
+
+  <!-- ===================== Link 2 (shoulder pitch) ===================== -->
+  <joint name="joint2" type="revolute">
+    <parent link="link1"/>
+    <child link="link2"/>
+    <origin xyz="0 0 ${link1_height}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="${-100*deg}" upper="${100*deg}" effort="50" velocity="2.5"/>
+    <dynamics damping="0.5" friction="0.1"/>
+  </joint>
+
+  <link name="link2">
+    <visual>
+      <origin xyz="0 0 ${link2_length/2}" rpy="0 0 0"/>
+      <geometry><box size="0.09 0.09 ${link2_length}"/></geometry>
+      <material name="isc_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link2_length/2}"/>
+      <geometry><box size="0.09 0.09 ${link2_length}"/></geometry>
+    </collision>
+    <xacro:box_inertial mass="1.2" x="0.09" y="0.09" z="${link2_length}"/>
+  </link>
+
+  <!-- ===================== Link 3 (elbow pitch) ===================== -->
+  <joint name="joint3" type="revolute">
+    <parent link="link2"/>
+    <child link="link3"/>
+    <origin xyz="0 0 ${link2_length}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="${-120*deg}" upper="${120*deg}" effort="40" velocity="2.5"/>
+    <dynamics damping="0.4" friction="0.08"/>
+  </joint>
+
+  <link name="link3">
+    <visual>
+      <origin xyz="0 0 ${link3_length/2}"/>
+      <geometry><box size="0.08 0.08 ${link3_length}"/></geometry>
+      <material name="isc_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link3_length/2}"/>
+      <geometry><box size="0.08 0.08 ${link3_length}"/></geometry>
+    </collision>
+    <xacro:box_inertial mass="1.0" x="0.08" y="0.08" z="${link3_length}"/>
+  </link>
+
+  <!-- ===================== Link 4 (wrist 1 yaw) ===================== -->
+  <joint name="joint4" type="revolute">
+    <parent link="link3"/>
+    <child link="link4"/>
+    <origin xyz="0 0 ${link3_length}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${-180*deg}" upper="${180*deg}" effort="20" velocity="3.0"/>
+    <dynamics damping="0.2" friction="0.05"/>
+  </joint>
+
+  <link name="link4">
+    <visual>
+      <origin xyz="0 0 ${link4_length/2}"/>
+      <geometry><cylinder radius="0.04" length="${link4_length}"/></geometry>
+      <material name="isc_orange"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link4_length/2}"/>
+      <geometry><cylinder radius="0.04" length="${link4_length}"/></geometry>
+    </collision>
+    <xacro:cylinder_inertial mass="0.5" radius="0.04" length="${link4_length}"/>
+  </link>
+
+  <!-- ===================== Link 5 (wrist 2 pitch) ===================== -->
+  <joint name="joint5" type="revolute">
+    <parent link="link4"/>
+    <child link="link5"/>
+    <origin xyz="0 0 ${link4_length}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="${-120*deg}" upper="${120*deg}" effort="20" velocity="3.0"/>
+    <dynamics damping="0.2" friction="0.05"/>
+  </joint>
+
+  <link name="link5">
+    <visual>
+      <origin xyz="0 0 ${link5_length/2}"/>
+      <geometry><cylinder radius="0.035" length="${link5_length}"/></geometry>
+      <material name="isc_orange"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link5_length/2}"/>
+      <geometry><cylinder radius="0.035" length="${link5_length}"/></geometry>
+    </collision>
+    <xacro:cylinder_inertial mass="0.4" radius="0.035" length="${link5_length}"/>
+  </link>
+
+  <!-- ===================== Link 6 (flange) ===================== -->
+  <joint name="joint6" type="revolute">
+    <parent link="link5"/>
+    <child link="link6"/>
+    <origin xyz="0 0 ${link5_length}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${-360*deg}" upper="${360*deg}" effort="15" velocity="3.0"/>
+    <dynamics damping="0.15" friction="0.04"/>
+  </joint>
+
+  <link name="link6">
+    <visual>
+      <origin xyz="0 0 ${link6_length/2}"/>
+      <geometry><cylinder radius="0.032" length="${link6_length}"/></geometry>
+      <material name="isc_dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link6_length/2}"/>
+      <geometry><cylinder radius="0.032" length="${link6_length}"/></geometry>
+    </collision>
+    <xacro:cylinder_inertial mass="0.3" radius="0.032" length="${link6_length}"/>
+  </link>
+
+  <!-- tool0 flange frame -->
+  <joint name="tool0_joint" type="fixed">
+    <parent link="link6"/>
+    <child link="tool0"/>
+    <origin xyz="0 0 ${link6_length}" rpy="0 0 0"/>
+  </joint>
+  <link name="tool0"/>
+
+  <!-- ===================== Gripper ===================== -->
+  <joint name="gripper_base_joint" type="fixed">
+    <parent link="tool0"/>
+    <child link="gripper_link"/>
+    <origin xyz="0 0 0.01" rpy="0 0 0"/>
+  </joint>
+
+  <link name="gripper_link">
+    <visual>
+      <origin xyz="0 0 0.03"/>
+      <geometry><box size="0.08 0.05 0.06"/></geometry>
+      <material name="isc_dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.03"/>
+      <geometry><box size="0.08 0.05 0.06"/></geometry>
+    </collision>
+    <xacro:box_inertial mass="0.25" x="0.08" y="0.05" z="0.06"/>
+  </link>
+
+  <!-- Left finger -->
+  <joint name="gripper_left_joint" type="prismatic">
+    <parent link="gripper_link"/>
+    <child link="gripper_left_link"/>
+    <origin xyz="0.025 0 0.08" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="0.0" upper="0.04" effort="20" velocity="0.1"/>
+    <dynamics damping="0.5" friction="0.2"/>
+  </joint>
+  <link name="gripper_left_link">
+    <visual>
+      <origin xyz="0 0 0.02"/>
+      <geometry><box size="0.012 0.03 0.06"/></geometry>
+      <material name="isc_blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.02"/>
+      <geometry><box size="0.012 0.03 0.06"/></geometry>
+    </collision>
+    <xacro:box_inertial mass="0.03" x="0.012" y="0.03" z="0.06"/>
+  </link>
+
+  <!-- Right finger -->
+  <joint name="gripper_right_joint" type="prismatic">
+    <parent link="gripper_link"/>
+    <child link="gripper_right_link"/>
+    <origin xyz="-0.025 0 0.08" rpy="0 0 0"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="0.0" upper="0.04" effort="20" velocity="0.1"/>
+    <dynamics damping="0.5" friction="0.2"/>
+  </joint>
+  <link name="gripper_right_link">
+    <visual>
+      <origin xyz="0 0 0.02"/>
+      <geometry><box size="0.012 0.03 0.06"/></geometry>
+      <material name="isc_blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.02"/>
+      <geometry><box size="0.012 0.03 0.06"/></geometry>
+    </collision>
+    <xacro:box_inertial mass="0.03" x="0.012" y="0.03" z="0.06"/>
+  </link>
+
+  <!-- TCP -->
+  <joint name="tcp_joint" type="fixed">
+    <parent link="gripper_link"/>
+    <child link="tcp_link"/>
+    <origin xyz="0 0 0.12" rpy="0 0 0"/>
+  </joint>
+  <link name="tcp_link"/>
+
+  <!-- ===================== Camera (eye-to-hand on stand) ===================== -->
+  <joint name="camera_stand_joint" type="fixed">
+    <parent link="world"/>
+    <child link="camera_stand_link"/>
+    <origin xyz="0.55 0.35 0.75" rpy="0 ${30*deg} ${200*deg}"/>
+  </joint>
+
+  <link name="camera_stand_link">
+    <visual>
+      <origin xyz="0 0 -0.35"/>
+      <geometry><cylinder radius="0.015" length="0.7"/></geometry>
+      <material name="isc_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.35"/>
+      <geometry><cylinder radius="0.015" length="0.7"/></geometry>
+    </collision>
+    <xacro:cylinder_inertial mass="0.5" radius="0.015" length="0.7"/>
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <parent link="camera_stand_link"/>
+    <child link="camera_link"/>
+    <origin xyz="0 0 0.02" rpy="${-PI/2} 0 ${-PI/2}"/>
+  </joint>
+
+  <link name="camera_link">
+    <visual>
+      <geometry><box size="0.04 0.08 0.03"/></geometry>
+      <material name="isc_dark"/>
+    </visual>
+    <collision>
+      <geometry><box size="0.04 0.08 0.03"/></geometry>
+    </collision>
+    <xacro:box_inertial mass="0.1" x="0.04" y="0.08" z="0.03"/>
+  </link>
+
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_color_optical_frame"/>
+    <origin xyz="0 0 0" rpy="${-PI/2} 0 ${-PI/2}"/>
+  </joint>
+  <link name="camera_color_optical_frame"/>
+
+  <!-- world fixed root for Gazebo -->
+  <link name="world"/>
+  <joint name="world_joint" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ===================== ros2_control ===================== -->
+  <xacro:arg name="use_sim" default="true"/>
+  <xacro:arg name="use_fake_hardware" default="false"/>
+
+  <ros2_control name="isc_arm_system" type="system">
+    <hardware>
+      <xacro:if value="$(arg use_sim)">
+        <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+      </xacro:if>
+      <xacro:unless value="$(arg use_sim)">
+        <xacro:if value="$(arg use_fake_hardware)">
+          <plugin>mock_components/GenericSystem</plugin>
+        </xacro:if>
+        <xacro:unless value="$(arg use_fake_hardware)">
+          <plugin>xarm_control/XArmHW</plugin>
+        </xacro:unless>
+      </xacro:unless>
+    </hardware>
+
+    <joint name="joint1">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="joint2">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="joint3">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="joint4">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="joint5">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="joint6">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="gripper_left_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="gripper_right_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+</robot>

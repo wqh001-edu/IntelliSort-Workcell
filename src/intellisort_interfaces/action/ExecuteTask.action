@@ -1,0 +1,20 @@
+# goal
+string task_id
+string[] object_classes
+string[] place_slots
+int32 max_targets
+bool enable_recovery
+---
+# result
+bool success
+int32 completed
+int32 failed
+float32 duration_sec
+string message
+---
+# feedback
+string phase
+float32 progress
+int32 completed
+int32 failed
+string message

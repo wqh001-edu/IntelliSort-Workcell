@@ -1,0 +1,17 @@
+# goal
+string object_id
+string object_class
+geometry_msgs/PoseStamped target_pose
+string place_slot
+float32 timeout_sec
+---
+# result
+bool success
+string error_code
+float32 duration_sec
+string message
+---
+# feedback
+string phase
+float32 progress
+string message

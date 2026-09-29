@@ -1,0 +1,18 @@
+/**:
+  ros__parameters:
+    use_sim_time: true
+
+mode_manager:
+  ros__parameters:
+    robot_driver: sim
+    camera_driver: sim
+    end_effector: parallel_2f
+    use_sim_time: true
+
+task_manager:
+  ros__parameters:
+    auto_run_demo: false
+    max_targets: 4
+    max_retries: 2
+    enable_recovery: true
+    cycle_timeout_sec: 90.0

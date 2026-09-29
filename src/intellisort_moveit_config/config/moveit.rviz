@@ -1,0 +1,43 @@
+# Default MoveIt RViz config (minimal but functional)
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: moveit_rviz_plugin/MotionPlanning
+      Name: MotionPlanning
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel
+    - Class: rviz_default_plugins/TF
+      Name: TF
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Detections
+      Topic:
+        Value: /detections_markers
+    - Class: rviz_default_plugins/MarkerArray
+      Name: TargetPoses
+      Topic:
+        Value: /target_pose_markers
+  Global Options:
+    Background Color: 30; 34; 42
+    Fixed Frame: base_link
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 2.2
+      Focal Point:
+        X: 0.2
+        Y: 0
+        Z: 0.5
+      Pitch: 0.5
+      Yaw: 0.8
+Window Geometry:
+  Height: 900
+  Width: 1400

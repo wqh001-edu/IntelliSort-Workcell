@@ -1,0 +1,11 @@
+# request
+float32 position
+float32 max_effort
+---
+# response
+bool success
+float32 position
+float32 effort
+bool reached_goal
+bool stalled
+string message

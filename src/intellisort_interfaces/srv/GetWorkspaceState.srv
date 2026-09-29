@@ -1,0 +1,9 @@
+# request
+bool include_detections
+---
+# response
+bool success
+intellisort_interfaces/TargetPoseArray targets
+string[] occupied_slots
+string[] free_slots
+string message
