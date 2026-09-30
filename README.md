@@ -180,12 +180,10 @@ ros2 service call /set_mode intellisort_interfaces/srv/SetMode "{mode: sim, enab
 
 ---
 
-## 7. 硬件迁移原则
+## 7. 硬件迁移原则（如实说明）
 
-上层**尽量不改**：任务逻辑、感知接口、MoveIt 规划、行为树、Topic/Action 名称。  
-只替换：`hardware interface`、controller 参数、相机/机械臂驱动、标定与限位。
-
-推荐实物：**UFACTORY xArm6** + 电动夹爪 + RealSense D435（与仿真同构）。
+当前 `mode_manager` 提供 `/set_mode` **模式标记**；**驱动切换需改 launch/参数**（见 `docs/09_hardware.md`）。  
+上层接口（感知、任务、MoveIt 请求、Topic/Action 名称）为迁移预留，推荐实物 **xArm6 + D435**。
 
 ---
 
@@ -195,6 +193,7 @@ ros2 service call /set_mode intellisort_interfaces/srv/SetMode "{mode: sim, enab
 2. 仿真和硬件兼容  
 3. 模块化  
 4. 可调试 / 可测试 / 可演示 / 可解释  
+5. **文档与代码一致**（见 `docs/14` 体检报告）  
 
 ---
 

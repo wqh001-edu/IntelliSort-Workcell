@@ -1,5 +1,7 @@
-"""Send ExecuteTask action to run the sorting demo once."""
+"""Send ExecuteTask and exit non-zero on failure (CI-friendly)."""
 from __future__ import annotations
+
+import sys
 
 import rclpy
 from rclpy.action import ActionClient
@@ -14,18 +16,20 @@ class RunPickDemo(Node):
         self.declare_parameter('task_id', 'demo_sorting')
         self.declare_parameter('max_targets', 3)
         self.declare_parameter('object_classes', ['red', 'green', 'blue'])
+        self.declare_parameter('enable_recovery', True)
         self._client = ActionClient(self, ExecuteTask, '/execute_task')
+        self.exit_code = 1
 
-    def send(self) -> None:
+    def send(self) -> int:
         if not self._client.wait_for_server(timeout_sec=15.0):
             self.get_logger().error('/execute_task not available')
-            return
+            return 2
         goal = ExecuteTask.Goal()
         goal.task_id = self.get_parameter('task_id').value
         goal.object_classes = list(self.get_parameter('object_classes').value)
         goal.place_slots = []
         goal.max_targets = int(self.get_parameter('max_targets').value)
-        goal.enable_recovery = True
+        goal.enable_recovery = bool(self.get_parameter('enable_recovery').value)
 
         self.get_logger().info('Sending ExecuteTask...')
         send_future = self._client.send_goal_async(
@@ -34,14 +38,19 @@ class RunPickDemo(Node):
         goal_handle = send_future.result()
         if goal_handle is None or not goal_handle.accepted:
             self.get_logger().error('goal rejected')
-            return
+            return 3
         result_future = goal_handle.get_result_async()
         rclpy.spin_until_future_complete(self, result_future)
-        result = result_future.result().result
+        wrapped = result_future.result()
+        if wrapped is None:
+            self.get_logger().error('no result')
+            return 4
+        result = wrapped.result
         self.get_logger().info(
             f'Demo finished success={result.success} '
             f'completed={result.completed} failed={result.failed} '
             f'msg={result.message}')
+        return 0 if result.success else 1
 
     def _feedback(self, msg) -> None:
         fb = msg.feedback
@@ -53,14 +62,16 @@ class RunPickDemo(Node):
 def main(args=None) -> None:
     rclpy.init(args=args)
     node = RunPickDemo()
+    code = 1
     try:
-        node.send()
+        code = node.send()
     except KeyboardInterrupt:
-        pass
+        code = 130
     finally:
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
+    sys.exit(code)
 
 
 if __name__ == '__main__':

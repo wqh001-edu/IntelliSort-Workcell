@@ -52,10 +52,12 @@ class MoveItClient:
         return ok
 
     def _spin_until(self, future, timeout_sec: float) -> bool:
-        from rclpy.executor import FutureReturnCode
-        rc = rclpy.spin_until_future_complete(
-            self._node, future, timeout_sec=timeout_sec)
-        return rc == FutureReturnCode.SUCCESS and future.done()
+        """Wait for a future without nested spin (node lives on MTE)."""
+        import time as _time
+        deadline = _time.time() + timeout_sec
+        while not future.done() and _time.time() < deadline:
+            _time.sleep(0.02)
+        return future.done()
 
     def plan_and_move_pose(
         self,

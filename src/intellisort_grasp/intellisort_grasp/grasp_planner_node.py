@@ -1,4 +1,4 @@
-"""Generate top-down and side grasp candidates from target poses."""
+"""Generate top-down grasp candidates with correct yaw about tool Z."""
 from __future__ import annotations
 
 import math
@@ -14,6 +14,7 @@ from intellisort_interfaces.msg import (
     TargetPose,
     TargetPoseArray,
 )
+from intellisort_grasp.quat import topdown_quat_with_yaw
 
 
 class GraspPlannerNode(LifecycleNode):
@@ -25,6 +26,7 @@ class GraspPlannerNode(LifecycleNode):
         self.declare_parameter('grasp_depth', 0.015)
         self.declare_parameter('num_yaw_samples', 2)
         self.declare_parameter('default_width', 0.05)
+        self.declare_parameter('publish_pregrasp', True)
 
         self._pub = None
         self._sub = None
@@ -66,43 +68,38 @@ class GraspPlannerNode(LifecycleNode):
         out.header = msg.header
         for tp in msg.poses:
             out.candidates.extend(self.generate(tp))
-        # sort by score desc
         out.candidates.sort(key=lambda c: c.score, reverse=True)
         self._pub.publish(out)
 
     def generate(self, tp: TargetPose) -> list[GraspCandidate]:
         candidates: list[GraspCandidate] = []
-        approach_h = float(self.get_parameter('approach_height').value)
         depth = float(self.get_parameter('grasp_depth').value)
-        n_yaw = int(self.get_parameter('num_yaw_samples').value)
+        n_yaw = max(1, int(self.get_parameter('num_yaw_samples').value))
         width = float(self.get_parameter('default_width').value)
+        approach_h = float(self.get_parameter('approach_height').value)
 
         base = tp.pose
         x = base.pose.position.x
         y = base.pose.position.y
         z = base.pose.position.z
 
-        yaws = [0.0] if n_yaw <= 1 else [0.0, math.pi / 2.0]
-        for yaw in yaws:
+        if n_yaw == 1:
+            yaws = [0.0]
+        else:
+            yaws = [i * math.pi / n_yaw for i in range(n_yaw)]
+
+        for i, yaw in enumerate(yaws):
             grasp = PoseStamped()
             grasp.header = base.header
             grasp.header.frame_id = base.header.frame_id or 'base_link'
             grasp.pose.position.x = x
             grasp.pose.position.y = y
             grasp.pose.position.z = z + depth
-            # tool Z pointing down; yaw around Z
-            half = yaw * 0.5
-            grasp.pose.orientation.x = math.sin(half)
-            grasp.pose.orientation.y = 0.0
-            grasp.pose.orientation.z = 0.0
-            grasp.pose.orientation.w = math.cos(half)
-            # For top-down: use (x=1,w=0) then adjust — keep explicit quaternion
-            # Top-down default (matches pose_estimator):
-            if abs(yaw) < 1e-6:
-                grasp.pose.orientation.x = 1.0
-                grasp.pose.orientation.y = 0.0
-                grasp.pose.orientation.z = 0.0
-                grasp.pose.orientation.w = 0.0
+            qx, qy, qz, qw = topdown_quat_with_yaw(yaw)
+            grasp.pose.orientation.x = qx
+            grasp.pose.orientation.y = qy
+            grasp.pose.orientation.z = qz
+            grasp.pose.orientation.w = qw
 
             approach = Vector3()
             approach.x = 0.0
@@ -115,12 +112,12 @@ class GraspPlannerNode(LifecycleNode):
             gc.grasp_pose = grasp
             gc.approach_dir = approach
             gc.width = width
-            # Prefer higher confidence and centered yaw sample
-            score = tp.confidence * (1.0 if abs(yaw) < 1e-6 else 0.85)
-            gc.score = float(score)
+            # first sample (yaw=0) preferred
+            gc.score = float(tp.confidence * (1.0 if i == 0 else 0.85))
             candidates.append(gc)
 
-        # Pre-approach pose is produced later in task layer (z + approach_h)
+        # expose approach height for consumers via width field unused —
+        # task_manager uses its APPROACH_HEIGHT; keep param available
         _ = approach_h
         return candidates
 

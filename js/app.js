@@ -275,18 +275,17 @@ src/intellisort_task/intellisort_task/task_manager_node.py  # _pick_and_place_on
     },
 
     task() {
-      return pageHeader("TASK", "任务规划", "行为树语义编排多阶段抓放。") +
-        section("树", code(`Root(Fallback)
-├── MainSequence
-│   Perceive → Select → BuildScene → PlanPick → Pick
-│   → Confirm → PlanPlace → Place → Report
-└── Recovery (Diagnose → Choose → Execute → RetryOrSkip)`)) +
+      return pageHeader("TASK", "任务规划", "Python 行为树风格状态机（XML 为设计规范，运行时不解析）。") +
+        section("运行时序列", code(`select → pre-grasp → open → descend → close+confirm → lift
+→ place → open → retreat → ready
+fail → /recovery → replan | re-grasp | skip | abort`)) +
         section("下钻", `<div class="drill">
-          <a href="#/bt"><div><div class="t">行为树任务</div><div class="d">XML 规范与实现</div></div><div class="go">→</div></a>
+          <a href="#/bt"><div><div class="t">行为树任务</div><div class="d">规范 vs 实现</div></div><div class="go">→</div></a>
         </div>`) +
-        section("类别映射", code(`red / yellow → slot_a
-green        → slot_b
-blue         → slot_c`));
+        section("类别映射", code(`red / yellow → slot_a  (0.35, 0.28, 0.75)
+green        → slot_b  (0.48, 0.12, 0.75)
+blue         → slot_c  (0.48, -0.12, 0.75)
+# 常量单一来源: intellisort_task/workspace.py`));
     },
 
     exceptions() {
@@ -387,22 +386,24 @@ intellisort_demo`));
     },
 
     dod() {
-      return pageHeader("DOD", "完成标准", "做到什么程度算完成。") +
-        section("P0", `<div class="grid cols-2">
+      return pageHeader("DOD", "完成标准（与实现对齐）", "✓=已接线可验证 · ◐=部分 · ○=目标/未做") +
+        section("状态", `<div class="grid cols-2">
           ${[
-            "一键启动完整 Gazebo 工作站",
-            "≥3 类零件识别→抓取→分拣闭环",
-            "多目标任务可执行",
-            "规划/抓取/任务指标可统计",
-            "≥6 类异常策略落地",
-            "sim/real 配置开关",
-            "接口与 TF 文档完整",
-            "13 篇 docs + README 可跑通",
-            "HTML 多级导航完整",
-            "5–8 分钟可复现 Demo",
-          ].map((t) => `<div class="card"><h3>✓ ${t}</h3></div>`).join("")}
+            ["◐", "一键启动 Gazebo 工作站", "启动后确认 ros2 control list_controllers"],
+            ["◐", "多品种抓取分拣闭环", "synthetic_targets + run_pick_demo"],
+            ["✓", "run_pick_demo 失败退出码 ≠ 0", "tests/run_acceptance.sh"],
+            ["✓", "指标为真实计数", "/system_metrics 由 task_manager 统计"],
+            ["✓", "抓取前目标碰撞放行/移除", "scene_builder"],
+            ["✓", "夹爪到位反馈", "gripper_server 对比 joint_states"],
+            ["✓", "/recovery 被 task_manager 调用", "supervisor 策略表"],
+            ["✓", "单元测试可失败", "tests/test_unit_constants.py"],
+            ["◐", "文档无夸大表述", "行为树=风格编排；暂停/热切换驱动未做"],
+            ["○", "暂停/继续", "后续升级"],
+            ["○", "驱动一键热切换", "后续升级（当前改 launch）"],
+            ["○", "真机 xArm 闭环", "硬件到位后"],
+          ].map(([m, t, d]) => `<div class="card"><h3>${m} ${t}</h3><p>${d}</p></div>`).join("")}
         </div>`) +
-        `<div class="callout success"><strong>一句话：</strong>非作者能按 README 在 1 小时内启动系统并看懂架构，即可认为工程完成。</div>`;
+        `<div class="callout"><strong>验收红线：</strong>退出码可红 · 指标非假 · 抓取不与目标碰撞盒冲突 · recovery 有调用 · 文档与代码一致。</div>`;
     },
 
     detection() {
